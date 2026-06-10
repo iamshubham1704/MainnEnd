@@ -41,7 +41,7 @@ export default function LoginPage() {
 
       login(data.token, data.user);
       await checkAuth();
-      router.push("/");
+      router.push("/dashboard");
     } catch (err) {
       setError("An error occurred. Please try again.");
       console.error(err);
@@ -58,7 +58,7 @@ export default function LoginPage() {
         <div className="text-center space-y-2 sm:space-y-3">
           <div className="flex items-center justify-center gap-2">
             <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-indigo-500 animate-pulse" />
-            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            <h1 className="text-xl sm:text-2xl font-bold bg-linear-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
               ColdMail AI
             </h1>
           </div>
@@ -112,7 +112,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-2.5 sm:py-3 px-4 rounded-lg font-semibold text-sm sm:text-base text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#020205] focus:ring-indigo-500 disabled:opacity-50 transition-all shadow-lg shadow-indigo-900/30 active:scale-[0.98]"
+            className="w-full flex justify-center py-2.5 sm:py-3 px-4 rounded-lg font-semibold text-sm sm:text-base text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#020205] focus:ring-indigo-500 disabled:opacity-50 transition-all shadow-lg shadow-indigo-900/30 active:scale-[0.98]"
           >
             {isLoading ? "Signing in..." : "Sign In"}
           </button>
@@ -120,7 +120,7 @@ export default function LoginPage() {
 
         <div className="text-center space-y-2 sm:space-y-3">
           <p className="text-xs sm:text-sm text-zinc-400">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/auth/register" className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
               Create one
             </Link>
