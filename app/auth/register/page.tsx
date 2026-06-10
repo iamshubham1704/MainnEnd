@@ -61,32 +61,32 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#020205] text-[#f4f4f7] font-sans relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#020205] text-[#f4f4f7] font-sans relative overflow-hidden px-4 py-8 sm:px-6 lg:px-8">
       <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl -z-10" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl -z-10" />
 
-      <div className="w-full max-w-md space-y-8 relative z-10">
-        <div className="text-center space-y-3">
+      <div className="w-full max-w-md space-y-6 sm:space-y-8 relative z-10">
+        <div className="text-center space-y-2 sm:space-y-3">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-indigo-500 animate-pulse" />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-indigo-500 animate-pulse" />
+            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
               ColdMail AI
             </h1>
           </div>
-          <h2 className="text-2xl font-bold text-[#f4f4f7]">Create Account</h2>
-          <p className="text-sm text-zinc-400">Join us and start managing campaigns</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-[#f4f4f7]">Create Account</h2>
+          <p className="text-xs sm:text-sm text-zinc-400">Join us and start managing campaigns</p>
         </div>
 
-        <form className="space-y-5 bg-[#07070f]/60 backdrop-blur-xl border border-white/5 rounded-2xl p-8 shadow-2xl shadow-indigo-900/20" onSubmit={handleSubmit}>
+        <form className="space-y-4 sm:space-y-5 bg-[#07070f]/60 backdrop-blur-xl border border-white/5 rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-2xl shadow-indigo-900/20" onSubmit={handleSubmit}>
           {error && (
             <div className="rounded-lg bg-red-950/40 border border-red-500/20 p-3">
               <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
+              <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-zinc-300 mb-1.5 sm:mb-2">
                 Email Address
               </label>
               <input
@@ -95,7 +95,7 @@ export default function RegisterPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-[#f4f4f7] placeholder-zinc-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-lg text-[#f4f4f7] placeholder-zinc-500 text-sm sm:text-base focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -103,7 +103,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-2">
+              <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-zinc-300 mb-1.5 sm:mb-2">
                 Password
               </label>
               <input
@@ -112,7 +112,7 @@ export default function RegisterPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-[#f4f4f7] placeholder-zinc-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-lg text-[#f4f4f7] placeholder-zinc-500 text-sm sm:text-base focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -120,7 +120,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="confirm-password" className="block text-sm font-medium text-zinc-300 mb-2">
+              <label htmlFor="confirm-password" className="block text-xs sm:text-sm font-medium text-zinc-300 mb-1.5 sm:mb-2">
                 Confirm Password
               </label>
               <input
@@ -129,7 +129,7 @@ export default function RegisterPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-[#f4f4f7] placeholder-zinc-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-lg text-[#f4f4f7] placeholder-zinc-500 text-sm sm:text-base focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -140,14 +140,14 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-3 px-4 rounded-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#020205] focus:ring-indigo-500 disabled:opacity-50 transition-all shadow-lg shadow-indigo-900/30 active:scale-[0.98]"
+            className="w-full flex justify-center py-2.5 sm:py-3 px-4 rounded-lg font-semibold text-sm sm:text-base text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#020205] focus:ring-indigo-500 disabled:opacity-50 transition-all shadow-lg shadow-indigo-900/30 active:scale-[0.98]"
           >
             {isLoading ? "Creating account..." : "Sign Up"}
           </button>
         </form>
 
-        <div className="text-center space-y-3">
-          <p className="text-sm text-zinc-400">
+        <div className="text-center space-y-2 sm:space-y-3">
+          <p className="text-xs sm:text-sm text-zinc-400">
             Already have an account?{" "}
             <Link href="/auth/login" className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
               Sign In

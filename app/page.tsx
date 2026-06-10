@@ -44,6 +44,9 @@ export default function Dashboard() {
   const { user, token, isLoading, logout } = useAuth();
   const router = useRouter();
 
+  // Mobile Menu State
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
   // Campaigns State
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [activeCampaign, setActiveCampaign] = useState<Campaign | null>(null);
@@ -652,48 +655,44 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen w-screen bg-[#020205] text-[#f4f4f7] font-sans">
+    <div className="flex h-screen w-screen bg-[#020205] text-[#f4f4f7] font-sans overflow-hidden">
       
+      {/* Mobile Menu Overlay */}
+      {showMobileMenu && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setShowMobileMenu(false)}
+        />
+      )}
+
       {/* Sidebar - Campaigns list */}
-      <aside className="w-80 border-r border-white/5 bg-[#07070f] flex flex-col">
-        <div className="p-6 border-b border-white/5 flex items-center justify-between">
+      <aside className={`fixed lg:static inset-y-0 left-0 w-80 border-r border-white/5 bg-[#07070f] flex flex-col z-50 transform transition-transform duration-300 lg:transform-none ${
+        showMobileMenu ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      }`}>
+        <div className="p-4 sm:p-6 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-indigo-500 animate-pulse glow-indigo" />
-            <h1 className="text-lg font-bold bg-linear-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-indigo-500 animate-pulse glow-indigo" />
+            <h1 className="text-base sm:text-lg font-bold bg-linear-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
               ColdMail AI
             </h1>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowSettingsModal(true)}
-              className="p-1.5 rounded-lg border border-white/5 hover:bg-white/5 transition-all text-zinc-400 hover:text-white"
-              title="Global Settings"
-              id="settings-btn"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
-            <button
-              onClick={() => {
-                logout();
-                router.push("/auth/login");
-              }}
-              className="p-1.5 rounded-lg border border-white/5 hover:bg-white/5 transition-all text-zinc-400 hover:text-red-400"
-              title="Logout"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </button>
-          </div>
+          <button
+            onClick={() => setShowMobileMenu(false)}
+            className="lg:hidden p-1.5 rounded-lg border border-white/5 hover:bg-white/5 transition-all text-zinc-400 hover:text-white"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        <div className="p-4">
+        <div className="p-3 sm:p-4 space-y-2">
           <button
-            onClick={startNewCampaign}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all font-semibold text-white text-sm shadow-lg shadow-indigo-900/30 active:scale-[0.98]"
+            onClick={() => {
+              startNewCampaign();
+              setShowMobileMenu(false);
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2 sm:py-2.5 px-4 rounded-xl bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all font-semibold text-white text-xs sm:text-sm shadow-lg shadow-indigo-900/30 active:scale-[0.98]"
             id="new-campaign-btn"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -701,10 +700,38 @@ export default function Dashboard() {
             </svg>
             Create Campaign
           </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-white/5 hover:bg-white/5 transition-all text-zinc-400 hover:text-white text-xs"
+              title="Global Settings"
+              id="settings-btn"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="hidden xs:inline">Settings</span>
+            </button>
+            <button
+              onClick={() => {
+                logout();
+                router.push("/auth/login");
+              }}
+              className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-white/5 hover:bg-white/5 transition-all text-zinc-400 hover:text-red-400 text-xs"
+              title="Logout"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span className="hidden xs:inline">Logout</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
-          <div className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase px-2 py-1">
+        <div className="flex-1 overflow-y-auto px-3 sm:px-4 pb-4 space-y-2">
+          <div className="text-[10px] sm:text-[11px] font-semibold tracking-wider text-zinc-500 uppercase px-2 py-1">
             Campaigns ({campaigns.length})
           </div>
           {campaigns.length === 0 ? (
@@ -715,16 +742,19 @@ export default function Dashboard() {
             campaigns.map((c) => (
               <div
                 key={c._id}
-                onClick={() => selectCampaign(c)}
-                className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer border transition-all ${
+                onClick={() => {
+                  selectCampaign(c);
+                  setShowMobileMenu(false);
+                }}
+                className={`group flex items-center justify-between p-2 sm:p-3 rounded-xl cursor-pointer border transition-all ${
                   activeCampaign?._id === c._id
                     ? "bg-indigo-950/30 border-indigo-500/30 text-white"
                     : "border-transparent hover:bg-white/5 text-zinc-400 hover:text-zinc-200"
                 }`}
               >
                 <div className="flex flex-col min-w-0 pr-2">
-                  <span className="text-sm font-semibold truncate">{c.name}</span>
-                  <span className="text-[11px] text-zinc-500 mt-0.5 truncate">
+                  <span className="text-xs sm:text-sm font-semibold truncate">{c.name}</span>
+                  <span className="text-[10px] text-zinc-500 mt-0.5 truncate">
                     {c.resumeName || "No Resume attached"}
                   </span>
                 </div>
@@ -733,7 +763,7 @@ export default function Dashboard() {
                     e.stopPropagation();
                     handleDeleteCampaign(c._id);
                   }}
-                  className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-zinc-800 text-zinc-500 hover:text-rose-400 transition-all"
+                  className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-zinc-800 text-zinc-500 hover:text-rose-400 transition-all flex-shrink-0"
                   title="Delete Campaign"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -748,10 +778,27 @@ export default function Dashboard() {
 
       {/* Main Panel */}
       <main className="flex-1 flex flex-col overflow-hidden bg-[#05050d]">
+        {/* Mobile hamburger menu */}
+        <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#07070f]/50">
+          <button
+            onClick={() => setShowMobileMenu(true)}
+            className="p-1.5 rounded-lg border border-white/5 hover:bg-white/5 transition-all text-zinc-400 hover:text-white"
+            title="Toggle Menu"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h1 className="text-sm font-bold bg-linear-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            ColdMail AI
+          </h1>
+          <div className="w-9" />
+        </div>
+
         {isCreatingCampaign || activeCampaign ? (
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex overflow-hidden flex-col lg:flex-row">
             {/* Left sidebar: Campaign editing/creation form */}
-            <section className="w-96 border-r border-white/5 bg-[#06060c] p-6 overflow-y-auto flex flex-col">
+            <section className="w-full lg:w-96 border-b lg:border-b-0 lg:border-r border-white/5 bg-[#06060c] p-4 sm:p-6 overflow-y-auto flex flex-col">
               <h2 className="text-base font-bold text-white mb-6 flex items-center gap-2">
                 <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -759,7 +806,7 @@ export default function Dashboard() {
                 {isCreatingCampaign ? "New Campaign" : "Campaign Settings"}
               </h2>
 
-              <form onSubmit={handleSaveCampaign} className="space-y-5 flex-1">
+              <form onSubmit={handleSaveCampaign} className="space-y-4 sm:space-y-5 flex-1">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-zinc-400">Campaign Name</label>
                   <input
@@ -860,25 +907,25 @@ export default function Dashboard() {
             </section>
 
             {/* Right side: Workspace workspace */}
-            <section className="flex-1 flex flex-col overflow-hidden">
+            <section className="flex-1 flex flex-col overflow-hidden min-h-0">
               {isCreatingCampaign ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center mb-6 glow-indigo">
-                    <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center mb-4 sm:mb-6 glow-indigo">
+                    <svg className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Campaign Setup Initiated</h3>
-                  <p className="text-sm text-zinc-400 max-w-sm">
+                  <h3 className="text-base sm:text-lg font-bold text-white mb-2">Campaign Setup Initiated</h3>
+                  <p className="text-xs sm:text-sm text-zinc-400 max-w-sm">
                     Enter the campaign metadata in the left panel and click &quot;Create Campaign&quot; to configure the workspace for your cold mail contacts and AI personalisation.
                   </p>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col overflow-hidden min-h-0">
                   
                   {/* Tabs bar */}
-                  <div className="px-8 border-b border-white/5 flex items-center justify-between bg-[#07070f]/50">
-                    <nav className="flex space-x-6">
+                  <div className="px-4 sm:px-8 border-b border-white/5 flex items-center justify-between bg-[#07070f]/50 overflow-x-auto">
+                    <nav className="flex space-x-4 sm:space-x-6 flex-nowrap">
                       {([
                         { id: "recipients", label: `Contacts (${recipients.length})` },
                         { id: "personalize", label: "AI Personalizer" },
@@ -887,7 +934,7 @@ export default function Dashboard() {
                         <button
                           key={tab.id}
                           onClick={() => setActiveTab(tab.id)}
-                          className={`py-4 border-b-2 text-sm font-semibold transition-all relative ${
+                          className={`py-3 sm:py-4 border-b-2 text-xs sm:text-sm font-semibold transition-all relative whitespace-nowrap ${
                             activeTab === tab.id
                               ? "border-indigo-500 text-white"
                               : "border-transparent text-zinc-400 hover:text-zinc-200"
@@ -895,20 +942,20 @@ export default function Dashboard() {
                         >
                           {tab.label}
                           {tab.id === "dispatcher" && queueStats.isProcessing && (
-                            <span className="absolute top-3 right-[-8px] w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+                            <span className="absolute top-2 sm:top-3 right-[-8px] w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
                           )}
                         </button>
                       ))}
                     </nav>
 
-                    <div className="flex items-center gap-2 text-xs text-zinc-400 bg-white/2 border border-white/5 py-1 px-3 rounded-full">
+                    <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-400 bg-white/2 border border-white/5 py-1 px-3 rounded-full flex-shrink-0">
                       <span className="w-2 h-2 rounded-full bg-emerald-500" />
                       Resend Queue Connected
                     </div>
                   </div>
 
                   {/* Tab contents */}
-                  <div className="flex-1 overflow-y-auto p-8">
+                  <div className="flex-1 overflow-y-auto p-4 sm:p-8 min-h-0">
                     
                     {/* Contacts Tab */}
                     {activeTab === "recipients" && (

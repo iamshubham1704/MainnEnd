@@ -134,3 +134,38 @@ body {
 .animate-slide-in {
   animation: slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Mobile responsive utilities */
+@layer utilities {
+  /* Container queries for responsive tables */
+  .table-responsive {
+    @apply overflow-x-auto;
+  }
+
+  .table-responsive-card {
+    @apply flex flex-col space-y-2;
+  }
+
+  .table-responsive-card-row {
+    @apply bg-white/2 border border-white/5 rounded-lg p-4 space-y-2;
+  }
+
+  .table-responsive-card-header {
+    @apply font-semibold text-zinc-300 text-xs uppercase tracking-wider;
+  }
+
+  .table-responsive-card-value {
+    @apply text-sm text-zinc-100;
+  }
+
+  /* Touch-friendly buttons */
+  .touch-button {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Safe area for notched devices */
+  .safe-area {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
