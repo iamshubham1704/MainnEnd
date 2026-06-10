@@ -1,14 +1,32 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
+import { verifyToken, getTokenFromRequest } from "@/lib/auth";
+import { ObjectId } from "mongodb";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const token = getTokenFromRequest(request);
+    if (!token) {
+      return NextResponse.json(
+        { error: "Unauthorized: No token provided." },
+        { status: 401 }
+      );
+    }
+
+    const payload = verifyToken(token);
+    if (!payload) {
+      return NextResponse.json(
+        { error: "Unauthorized: Invalid token." },
+        { status: 401 }
+      );
+    }
+
     const { db } = await connectToDatabase();
     const campaigns = await db
       .collection("campaigns")
-      .find({})
+      .find({ userId: new ObjectId(payload.userId) })
       .sort({ createdAt: -1 })
-      .project({ resumeData: 0 }) // Exclude large resume base64 data for listing
+      .project({ resumeData: 0 })
       .toArray();
 
     return NextResponse.json(campaigns);
@@ -21,6 +39,22 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const token = getTokenFromRequest(request);
+    if (!token) {
+      return NextResponse.json(
+        { error: "Unauthorized: No token provided." },
+        { status: 401 }
+      );
+    }
+
+    const payload = verifyToken(token);
+    if (!payload) {
+      return NextResponse.json(
+        { error: "Unauthorized: Invalid token." },
+        { status: 401 }
+      );
+    }
+
     const { db } = await connectToDatabase();
     const formData = await request.formData();
     
@@ -51,6 +85,7 @@ export async function POST(request: Request) {
     }
 
     const campaign = {
+      userId: new ObjectId(payload.userId),
       name,
       subject,
       template,

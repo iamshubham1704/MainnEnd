@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/lib/authContext";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface Campaign {
   _id: string;
@@ -37,6 +40,10 @@ interface QueueStats {
 }
 
 export default function Dashboard() {
+  // Auth State
+  const { user, token, isLoading, logout } = useAuth();
+  const router = useRouter();
+
   // Campaigns State
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [activeCampaign, setActiveCampaign] = useState<Campaign | null>(null);
@@ -155,27 +162,42 @@ export default function Dashboard() {
 
   // Fetch all campaigns
   const fetchCampaigns = async () => {
+    if (!token) return;
     try {
-      const res = await fetch("/api/campaign");
+      const res = await fetch("/api/campaign", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.ok) {
         const data = await res.json();
         setCampaigns(data);
         if (data.length > 0 && !activeCampaign) {
           selectCampaign(data[0]);
         }
+      } else if (res.status === 401) {
+        logout();
+        router.push("/auth/login");
       }
     } catch (err) {
       console.error("Failed to load campaigns", err);
     }
   };
 
+  // Check authentication on mount
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/auth/login");
+    }
+  }, [isLoading, user, router]);
+
   // Load Initial Settings & Campaigns
   useEffect(() => {
-    Promise.resolve().then(() => {
-      fetchCampaigns();
-    });
+    if (token) {
+      Promise.resolve().then(() => {
+        fetchCampaigns();
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [token]);
 
   // Poll queue status if queue is processing
   useEffect(() => {
@@ -224,6 +246,7 @@ export default function Dashboard() {
     try {
       const res = await fetch(url, {
         method,
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
@@ -236,7 +259,9 @@ export default function Dashboard() {
         // If creating, select the new one. If updating, select it again to refresh
         const targetId = data.campaignId || (activeCampaign ? activeCampaign._id : "");
         if (targetId) {
-          const resSingle = await fetch(`/api/campaign/${targetId}`);
+          const resSingle = await fetch(`/api/campaign/${targetId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
           if (resSingle.ok) {
             const freshCampaign = await resSingle.json();
             selectCampaign(freshCampaign);
@@ -612,6 +637,20 @@ export default function Dashboard() {
     }
   };
 
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#020205] text-[#f4f4f7]">
+        <p className="text-lg">Loading...</p>
+      </div>
+    );
+  }
+
+  // Redirect to login happens in useEffect, but this is a safety check
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="flex h-screen w-screen bg-[#020205] text-[#f4f4f7] font-sans">
       
@@ -624,17 +663,31 @@ export default function Dashboard() {
               ColdMail AI
             </h1>
           </div>
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            className="p-1.5 rounded-lg border border-white/5 hover:bg-white/5 transition-all text-zinc-400 hover:text-white"
-            title="Global Settings"
-            id="settings-btn"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="p-1.5 rounded-lg border border-white/5 hover:bg-white/5 transition-all text-zinc-400 hover:text-white"
+              title="Global Settings"
+              id="settings-btn"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => {
+                logout();
+                router.push("/auth/login");
+              }}
+              className="p-1.5 rounded-lg border border-white/5 hover:bg-white/5 transition-all text-zinc-400 hover:text-red-400"
+              title="Logout"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div className="p-4">
