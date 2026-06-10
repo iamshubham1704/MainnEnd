@@ -37,8 +37,6 @@ export async function connectToDatabase(): Promise<MongoConnection> {
     // Socket timeout settings (30 seconds)
     socketTimeoutMS: 30000,
     connectTimeoutMS: 30000,
-    // Retry settings for transient failures
-    maxCommitTimeoutMS: 10000,
     serverSelectionTimeoutMS: 5000,
   });
 
