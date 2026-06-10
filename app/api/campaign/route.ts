@@ -62,6 +62,7 @@ export async function POST(request: Request) {
     const subject = formData.get("subject") as string;
     const template = formData.get("template") as string;
     const fromEmail = formData.get("fromEmail") as string;
+    const smtpPass = formData.get("smtpPass") as string;
     const geminiApiKey = formData.get("geminiApiKey") as string;
     const resumeFile = formData.get("resume") as File | null;
 
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
       subject,
       template,
       fromEmail: fromEmail || "onboarding@resend.dev",
+      smtpPass: smtpPass || "",
       geminiApiKey: geminiApiKey || "",
       resumeData,
       resumeName,

@@ -6,6 +6,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let recipientId: string | undefined;
   try {
     const { id } = await params;
     const { db } = await connectToDatabase();
@@ -14,9 +15,11 @@ export async function POST(
       return NextResponse.json({ error: "Invalid campaign ID" }, { status: 400 });
     }
 
-    const { recipientId, customApiKey } = await request.json();
+    const body = await request.json();
+    recipientId = body.recipientId;
+    const customApiKey = body.customApiKey;
 
-    if (!ObjectId.isValid(recipientId)) {
+    if (!recipientId || !ObjectId.isValid(recipientId)) {
       return NextResponse.json({ error: "Invalid recipient ID" }, { status: 400 });
     }
 
@@ -74,32 +77,74 @@ Do not include any subject line. Start directly with the email greeting (e.g. "D
 Do not write any introductory or concluding conversational text. Return ONLY the complete email text.
 `;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
 
-    const response = await fetch(geminiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
+    let response: Response | null = null;
+    const retries = 3;
+    let delay = 2000;
+
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        response = await fetch(geminiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
               {
-                text: prompt,
+                parts: [
+                  {
+                    text: prompt,
+                  },
+                ],
               },
             ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-        },
-      }),
-    });
+            generationConfig: {
+              temperature: 0.7,
+            },
+          }),
+        });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Gemini API Error: ${errText || response.statusText}`);
+        if (response.ok) {
+          break;
+        }
+
+        // Retry on 503 Service Unavailable or 429 Too Many Requests
+        if (response.status === 503 || response.status === 429) {
+          console.warn(`Gemini API returned status ${response.status}. Attempt ${attempt} of ${retries}. Retrying in ${delay}ms...`);
+          if (attempt < retries) {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            delay *= 2;
+            continue;
+          }
+        }
+        break;
+      } catch (err) {
+        console.error(`Attempt ${attempt} failed with network error:`, err);
+        if (attempt < retries) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2;
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (!response || !response.ok) {
+      const errText = response ? await response.text() : "";
+      let errorMsg = (response ? response.statusText : "") || "Unknown network error";
+      try {
+        const parsed = JSON.parse(errText);
+        if (parsed.error && parsed.error.message) {
+          errorMsg = parsed.error.message;
+        } else if (typeof parsed.error === "string") {
+          errorMsg = parsed.error;
+        }
+      } catch {
+        if (errText) errorMsg = errText;
+      }
+      throw new Error(`Gemini API Error: ${errorMsg}`);
     }
 
     const resData = await response.json();
@@ -136,16 +181,13 @@ Do not write any introductory or concluding conversational text. Return ONLY the
     console.error("Personalization error:", errorMsg);
     
     // Log error to recipient document
-    if (request) {
+    if (recipientId && ObjectId.isValid(recipientId)) {
       try {
         const { db } = await connectToDatabase();
-        const body = await request.clone().json();
-        if (body.recipientId && ObjectId.isValid(body.recipientId)) {
-          await db.collection("recipients").updateOne(
-            { _id: new ObjectId(body.recipientId) },
-            { $set: { status: "failed", error: errorMsg } }
-          );
-        }
+        await db.collection("recipients").updateOne(
+          { _id: new ObjectId(recipientId) },
+          { $set: { status: "failed", error: errorMsg } }
+        );
       } catch (e) {
         console.error("Failed to update recipient error status:", e);
       }

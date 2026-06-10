@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/authContext";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 interface Campaign {
   _id: string;
@@ -11,6 +10,7 @@ interface Campaign {
   subject: string;
   template: string;
   fromEmail: string;
+  smtpPass?: string;
   geminiApiKey: string;
   resumeName?: string;
   createdAt: string;
@@ -57,19 +57,33 @@ export default function Dashboard() {
   const [campSubject, setCampSubject] = useState("");
   const [campTemplate, setCampTemplate] = useState("");
   const [campFromEmail, setCampFromEmail] = useState("");
+  const [campSmtpPass, setCampSmtpPass] = useState("");
   const [campGeminiKey, setCampGeminiKey] = useState("");
   const [campResume, setCampResume] = useState<File | null>(null);
   const [campResumeName, setCampResumeName] = useState("");
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
 
   // Global Settings State
-  const [globalGeminiKey, setGlobalGeminiKey] = useState(() => {
+  const [globalGeminiKey] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("global_gemini_api_key") || "";
     }
     return "";
   });
+  const [globalSenderEmail, setGlobalSenderEmail] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("global_sender_email") || "";
+    }
+    return "";
+  });
+  const [globalSmtpPass, setGlobalSmtpPass] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("global_smtp_pass") || "";
+    }
+    return "";
+  });
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showAppPasswordModal, setShowAppPasswordModal] = useState(false);
 
   // Recipients State
   const [recipients, setRecipients] = useState<Recipient[]>([]);
@@ -152,7 +166,8 @@ export default function Dashboard() {
     setCampName(campaign.name);
     setCampSubject(campaign.subject);
     setCampTemplate(campaign.template);
-    setCampFromEmail(campaign.fromEmail || "onboarding@resend.dev");
+    setCampFromEmail(campaign.fromEmail || globalSenderEmail || user?.email || "");
+    setCampSmtpPass(campaign.smtpPass || globalSmtpPass || "");
     setCampGeminiKey(campaign.geminiApiKey || "");
     setCampResumeName(campaign.resumeName || "");
     setCampResume(null);
@@ -235,6 +250,7 @@ export default function Dashboard() {
     formData.append("subject", campSubject);
     formData.append("template", campTemplate);
     formData.append("fromEmail", campFromEmail);
+    formData.append("smtpPass", campSmtpPass);
     formData.append("geminiApiKey", campGeminiKey);
     if (campResume) {
       formData.append("resume", campResume);
@@ -257,6 +273,12 @@ export default function Dashboard() {
         const data = await res.json();
         alert(method === "POST" ? "Campaign created!" : "Campaign updated!");
         
+        // Save to global local storage
+        localStorage.setItem("global_sender_email", campFromEmail);
+        localStorage.setItem("global_smtp_pass", campSmtpPass);
+        setGlobalSenderEmail(campFromEmail);
+        setGlobalSmtpPass(campSmtpPass);
+
         await fetchCampaigns();
         
         // If creating, select the new one. If updating, select it again to refresh
@@ -289,7 +311,8 @@ export default function Dashboard() {
     setCampName("");
     setCampSubject("");
     setCampTemplate("Hi {{name}},\n\nI hope this email finds you well.\n\nI am writing to express my interest in the {{role}} internship at {{company}}.\n\nBest regards,\n[Your Name]");
-    setCampFromEmail("onboarding@resend.dev");
+    setCampFromEmail(globalSenderEmail || user?.email || "");
+    setCampSmtpPass(globalSmtpPass || "");
     setCampGeminiKey("");
     setCampResume(null);
     setCampResumeName("");
@@ -496,12 +519,7 @@ export default function Dashboard() {
   const handleGenerateAI = async () => {
     if (!activeCampaign) return;
     
-    const targetApiKey = activeCampaign.geminiApiKey || globalGeminiKey;
-    if (!targetApiKey) {
-      alert("Please configure a Gemini API key in the campaign details or in global Settings first.");
-      setShowSettingsModal(true);
-      return;
-    }
+    const targetApiKey = activeCampaign.geminiApiKey || globalGeminiKey || "";
 
     // Filter recipients with status 'pending', 'ready', or 'failed'
     const pending = recipients.filter(r => r.status === "pending" || r.status === "ready" || r.status === "failed");
@@ -611,12 +629,14 @@ export default function Dashboard() {
     }
   };
 
-  // Save global API key
+  // Save global settings
   const handleSaveGlobalSettings = (e: React.FormEvent) => {
     e.preventDefault();
     localStorage.setItem("global_gemini_api_key", globalGeminiKey);
+    localStorage.setItem("global_sender_email", globalSenderEmail);
+    localStorage.setItem("global_smtp_pass", globalSmtpPass);
     setShowSettingsModal(false);
-    alert("Global Gemini API Key saved locally.");
+    alert("Global Settings saved locally.");
   };
 
   const getStatusBadge = (status: string) => {
@@ -763,7 +783,7 @@ export default function Dashboard() {
                     e.stopPropagation();
                     handleDeleteCampaign(c._id);
                   }}
-                  className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-zinc-800 text-zinc-500 hover:text-rose-400 transition-all flex-shrink-0"
+                  className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-zinc-800 text-zinc-500 hover:text-rose-400 transition-all shrink-0"
                   title="Delete Campaign"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -836,26 +856,37 @@ export default function Dashboard() {
                   <label className="text-xs font-semibold text-zinc-400">Sender Email (SMTP Account)</label>
                   <input
                     type="email"
-                    disabled
-                    value="iamshubham1719@gmail.com"
-                    className="w-full px-3 py-2 text-sm glass-input font-medium opacity-60 cursor-not-allowed"
+                    required
+                    value={campFromEmail}
+                    onChange={(e) => setCampFromEmail(e.target.value)}
+                    placeholder="e.g. yourname@gmail.com"
+                    className="w-full px-3 py-2 text-sm glass-input font-medium"
                   />
-                  <p className="text-[10px] text-zinc-500">Emails will be dispatched via your SMTP credential <code className="text-zinc-300">SMTP_USER</code>.</p>
                 </div>
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-zinc-400">Campaign Gemini Key</label>
-                    <span className="text-[10px] text-indigo-400">Optional</span>
+                    <label className="text-xs font-semibold text-zinc-400">SMTP Password (App Password)</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowAppPasswordModal(true)}
+                      className="text-[10px] text-indigo-400 hover:text-indigo-300 underline font-medium transition-colors"
+                    >
+                      How to get App Password?
+                    </button>
                   </div>
                   <input
                     type="password"
-                    value={campGeminiKey}
-                    onChange={(e) => setCampGeminiKey(e.target.value)}
-                    placeholder="Leave empty to use global key"
+                    required
+                    value={campSmtpPass}
+                    onChange={(e) => setCampSmtpPass(e.target.value)}
+                    placeholder="Enter your 16-character App Password"
                     className="w-full px-3 py-2 text-sm glass-input font-medium"
                   />
+                  <p className="text-[10px] text-zinc-500">Provide the 16-character SMTP App Password for this email. Once saved, it will be kept as your default settings.</p>
                 </div>
+
+
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-zinc-400">Resume PDF/Attachment</label>
@@ -948,7 +979,7 @@ export default function Dashboard() {
                       ))}
                     </nav>
 
-                    <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-400 bg-white/2 border border-white/5 py-1 px-3 rounded-full flex-shrink-0">
+                    <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-400 bg-white/2 border border-white/5 py-1 px-3 rounded-full shrink-0">
                       <span className="w-2 h-2 rounded-full bg-emerald-500" />
                       Resend Queue Connected
                     </div>
@@ -1095,7 +1126,7 @@ export default function Dashboard() {
                                       <td className="py-3.5 px-6">
                                         {getStatusBadge(r.status)}
                                         {r.error && (
-                                          <div className="text-[10px] text-rose-500 mt-1 max-w-[200px] truncate" title={r.error}>
+                                          <div className="text-[10px] text-rose-500 mt-1 max-w-[250px] whitespace-normal wrap-break-word" title={r.error}>
                                             Error: {r.error}
                                           </div>
                                         )}
@@ -1164,7 +1195,7 @@ export default function Dashboard() {
                               )}
                             </button>
                             <span className="text-[10px] text-zinc-500 font-medium">
-                              Uses model: <code className="text-zinc-400">gemini-1.5-flash</code>
+                              Uses model: <code className="text-zinc-400">gemini-2.5-flash</code>
                             </span>
                           </div>
                         </div>
@@ -1209,7 +1240,13 @@ export default function Dashboard() {
 
                                 <div className="bg-black/35 rounded-xl p-4 text-[11px] font-mono text-zinc-300 h-36 overflow-y-auto whitespace-pre-wrap leading-relaxed border border-white/5">
                                   {r.personalizedBody ? r.personalizedBody : (
-                                    <span className="text-zinc-600 italic">No personalization generated yet. Run the generator or edit manually.</span>
+                                    r.status === "failed" ? (
+                                      <span className="text-rose-400 font-semibold leading-relaxed">
+                                        Generation Failed: {r.error || "Unknown Gemini API error occurred."}
+                                      </span>
+                                    ) : (
+                                      <span className="text-zinc-600 italic">No personalization generated yet. Run the generator or edit manually.</span>
+                                    )
                                   )}
                                 </div>
                               </div>
@@ -1432,17 +1469,37 @@ export default function Dashboard() {
 
             <form onSubmit={handleSaveGlobalSettings} className="p-6 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-400">Global Gemini API Key</label>
+                <label className="text-xs font-semibold text-zinc-400">Global Sender Email</label>
                 <input
-                  type="password"
-                  value={globalGeminiKey}
-                  onChange={(e) => setGlobalGeminiKey(e.target.value)}
-                  placeholder="Paste your gemini API key..."
+                  type="email"
+                  value={globalSenderEmail}
+                  onChange={(e) => setGlobalSenderEmail(e.target.value)}
+                  placeholder="e.g. yourname@gmail.com"
                   className="w-full px-3 py-2 text-sm glass-input font-medium"
                 />
-                <p className="text-[10px] text-zinc-500 leading-normal">
-                  Your key is stored safely in your browser&apos;s <code className="text-indigo-400">localStorage</code> and is only used to connect to Google&apos;s Gemini endpoint directly from your machine.
-                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-zinc-400">Global SMTP Password (App Password)</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSettingsModal(false);
+                      setShowAppPasswordModal(true);
+                    }}
+                    className="text-[10px] text-indigo-400 hover:text-indigo-300 underline font-medium transition-colors"
+                  >
+                    How to get App Password?
+                  </button>
+                </div>
+                <input
+                  type="password"
+                  value={globalSmtpPass}
+                  onChange={(e) => setGlobalSmtpPass(e.target.value)}
+                  placeholder="Enter your 16-character App Password"
+                  className="w-full px-3 py-2 text-sm glass-input font-medium"
+                />
               </div>
 
               <div className="pt-2 border-t border-white/5 flex gap-2 justify-end">
@@ -1457,10 +1514,65 @@ export default function Dashboard() {
                   type="submit"
                   className="py-1.5 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors shadow shadow-indigo-950"
                 >
-                  Save API Key
+                  Save Settings
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* App Password Guide Modal */}
+      {showAppPasswordModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="glass-panel w-full max-w-md rounded-2xl overflow-hidden flex flex-col animate-slide-in border border-white/10">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-white">How to get Gmail App Password</h3>
+              <button
+                onClick={() => setShowAppPasswordModal(false)}
+                className="text-zinc-500 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-xs text-zinc-300 leading-relaxed">
+              <ol className="list-decimal pl-4 space-y-3">
+                <li>
+                  Go to your <a href="https://myaccount.google.com" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Google Account</a>.
+                </li>
+                <li>
+                  Select <strong>Security</strong> on the left navigation panel.
+                </li>
+                <li>
+                  Under <em>&quot;How you sign in to Google,&quot;</em> ensure <strong>2-Step Verification</strong> is enabled.
+                </li>
+                <li>
+                  Click on <strong>2-Step Verification</strong>, scroll to the bottom of the page, and select <strong>App passwords</strong>.
+                </li>
+                <li>
+                  Enter a name for the app (e.g. <code>ColdMail AI</code>) and click <strong>Create</strong>.
+                </li>
+                <li>
+                  Copy the generated <strong>16-character password</strong> from the yellow box and paste it here.
+                </li>
+              </ol>
+
+              <div className="mt-4 p-3 bg-indigo-950/20 border border-indigo-500/10 rounded-xl text-[10px] text-zinc-400">
+                <strong>Note:</strong> Make sure there are no spaces when pasting the password into the SMTP Password field.
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-black/20 border-t border-white/5 flex justify-end">
+              <button
+                onClick={() => setShowAppPasswordModal(false)}
+                className="py-1.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors shadow shadow-indigo-950"
+              >
+                Got it
+              </button>
+            </div>
           </div>
         </div>
       )}

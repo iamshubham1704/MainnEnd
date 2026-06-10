@@ -23,18 +23,31 @@ async function runQueueWorker(campaignId: string) {
   try {
     const { db } = await connectToDatabase();
     
+    // Fetch campaign details first
+    const campaign = await db
+      .collection("campaigns")
+      .findOne({ _id: new ObjectId(campaignId) });
+
+    if (!campaign) {
+      console.error(`Campaign ${campaignId} not found. Queue aborted.`);
+      return;
+    }
+
     // Retrieve SMTP configurations
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+    const globalSmtpUser = process.env.SMTP_USER;
+    const globalSmtpPass = process.env.SMTP_PASS;
     const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
     const smtpPort = parseInt(process.env.SMTP_PORT || "465");
 
+    const smtpUser = campaign.fromEmail || globalSmtpUser;
+    const smtpPass = campaign.smtpPass || globalSmtpPass;
+
     if (!smtpUser || !smtpPass) {
-      console.error("SMTP credentials (SMTP_USER/SMTP_PASS) are missing in .env. Queue aborted.");
+      console.error("SMTP credentials (user/password) are missing. Queue aborted.");
       // Set remaining queued to failed
       await db.collection("recipients").updateMany(
         { campaignId: new ObjectId(campaignId), status: "queued" },
-        { $set: { status: "failed", error: "SMTP credentials (SMTP_USER/SMTP_PASS) are missing in .env" } }
+        { $set: { status: "failed", error: "SMTP credentials (user/password) are missing." } }
       );
       return;
     }
@@ -49,16 +62,6 @@ async function runQueueWorker(campaignId: string) {
         pass: smtpPass,
       },
     });
-
-    // Fetch campaign details
-    const campaign = await db
-      .collection("campaigns")
-      .findOne({ _id: new ObjectId(campaignId) });
-
-    if (!campaign) {
-      console.error(`Campaign ${campaignId} not found. Queue aborted.`);
-      return;
-    }
 
     while (true) {
       // Atomic status update to 'sending' to avoid double-processing
@@ -102,8 +105,9 @@ async function runQueueWorker(campaignId: string) {
         }
 
         // Prepare email payload
+        const senderEmail = campaign.fromEmail || smtpUser || "onboarding@resend.dev";
         const emailPayload: NodemailerEmailPayload = {
-          from: `"Shubham" <${smtpUser}>`, // Set the requested sender email address
+          from: senderEmail.includes("<") ? senderEmail : `"Shubham" <${senderEmail}>`,
           to: recipient.email,
           subject: personalizedSubject,
           html: recipient.personalizedBody.replace(/\n/g, "<br>"),

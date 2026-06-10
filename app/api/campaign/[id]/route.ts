@@ -51,6 +51,7 @@ export async function PUT(
       const subject = formData.get("subject") as string;
       const template = formData.get("template") as string;
       const fromEmail = formData.get("fromEmail") as string;
+      const smtpPass = formData.get("smtpPass") as string;
       const geminiApiKey = formData.get("geminiApiKey") as string;
       const resumeFile = formData.get("resume") as File | null;
 
@@ -58,6 +59,7 @@ export async function PUT(
       if (subject) updateFields.subject = subject;
       if (template) updateFields.template = template;
       if (fromEmail !== null) updateFields.fromEmail = fromEmail;
+      if (smtpPass !== null) updateFields.smtpPass = smtpPass;
       if (geminiApiKey !== null) updateFields.geminiApiKey = geminiApiKey;
 
       if (resumeFile && resumeFile.size > 0) {
@@ -69,12 +71,13 @@ export async function PUT(
       }
     } else {
       const body = await request.json();
-      const { name, subject, template, fromEmail, geminiApiKey, resumeData, resumeName, resumeType } = body;
+      const { name, subject, template, fromEmail, smtpPass, geminiApiKey, resumeData, resumeName, resumeType } = body;
       
       if (name) updateFields.name = name;
       if (subject) updateFields.subject = subject;
       if (template) updateFields.template = template;
       if (fromEmail !== null) updateFields.fromEmail = fromEmail;
+      if (smtpPass !== null) updateFields.smtpPass = smtpPass;
       if (geminiApiKey !== null) updateFields.geminiApiKey = geminiApiKey;
       if (resumeData) updateFields.resumeData = resumeData;
       if (resumeName) updateFields.resumeName = resumeName;
