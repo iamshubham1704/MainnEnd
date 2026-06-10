@@ -15,10 +15,32 @@ let cachedConnection: MongoConnection | null = null;
 
 export async function connectToDatabase(): Promise<MongoConnection> {
   if (cachedConnection) {
-    return cachedConnection;
+    try {
+      // Test if the cached connection is still alive
+      await cachedConnection.db.admin().ping();
+      return cachedConnection;
+    } catch {
+      // Connection is stale, clear it and reconnect
+      cachedConnection = null;
+    }
   }
 
-  const client = new MongoClient(uri as string);
+  const client = new MongoClient(uri as string, {
+    // SSL/TLS configuration
+    ssl: true,
+    retryWrites: true,
+    w: "majority",
+    tlsInsecure: false,
+    // Connection pool settings
+    maxPoolSize: 10,
+    minPoolSize: 2,
+    // Socket timeout settings (30 seconds)
+    socketTimeoutMS: 30000,
+    connectTimeoutMS: 30000,
+    // Retry settings for transient failures
+    maxCommitTimeoutMS: 10000,
+    serverSelectionTimeoutMS: 5000,
+  });
 
   try {
     await client.connect();
@@ -28,6 +50,9 @@ export async function connectToDatabase(): Promise<MongoConnection> {
       ? dbUri.split(".net/")[1].split("?")[0] || "coldmail_sender" 
       : "coldmail_sender";
     const db = client.db(dbName);
+    
+    // Test the connection
+    await db.admin().ping();
     
     cachedConnection = { client, db };
     return cachedConnection;

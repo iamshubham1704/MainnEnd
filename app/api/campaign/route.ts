@@ -70,7 +70,14 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "Unknown error";
-    console.error("POST campaign error:", errorMsg);
-    return NextResponse.json({ error: errorMsg }, { status: 500 });
+    console.error("Error saving campaign:", errorMsg);
+    console.error("Full error:", error);
+    return NextResponse.json(
+      { 
+        error: `Error saving campaign: ${errorMsg}`,
+        details: process.env.NODE_ENV === "development" ? error : undefined,
+      }, 
+      { status: 500 }
+    );
   }
 }
