@@ -107,7 +107,7 @@ async function runQueueWorker(campaignId: string) {
         // Prepare email payload
         const senderEmail = campaign.fromEmail || smtpUser || "onboarding@resend.dev";
         const emailPayload: NodemailerEmailPayload = {
-          from: senderEmail.includes("<") ? senderEmail : `"Shubham" <${senderEmail}>`,
+          from: senderEmail,
           to: recipient.email,
           subject: personalizedSubject,
           html: recipient.personalizedBody.replace(/\n/g, "<br>"),
